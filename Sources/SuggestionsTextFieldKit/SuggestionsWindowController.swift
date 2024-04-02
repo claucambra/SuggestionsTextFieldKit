@@ -56,10 +56,8 @@ public class SuggestionsWindowController: NSWindowController {
         }
     }
 
-    public convenience init() {
-        self.init()
-        self.window = suggestionsWindow
-
+    public init() {
+        super.init(window: suggestionsWindow)
         let contentView = SuggestionsWindowContentView()
         suggestionsWindow.contentView = contentView
         contentView.autoresizesSubviews = false
