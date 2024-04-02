@@ -15,8 +15,8 @@ public class SuggestionsWindowController: NSWindowController {
     public var dataSource: SuggestionsDataSource? = nil
 
     // What to do when choice is made
-    var action: Selector? = nil
-    var target: Any?
+    public var action: Selector? = nil
+    public var target: Any?
 
     private let kTrackerKey = "whichImageView"
     private let suggestionsWindow = SuggestionsWindow(
@@ -151,7 +151,9 @@ public class SuggestionsWindowController: NSWindowController {
 
     private func userSetSelectedView(_ view: NSView?) {
         selectedView = view as? SuggestionView
-        NSApp.sendAction(action!, to: target, from: self)
+        if let action = action, let target = target {
+            NSApp.sendAction(action, to: target, from: self)
+        }
     }
 
     // MARK: - Handling of window relative to textfield
