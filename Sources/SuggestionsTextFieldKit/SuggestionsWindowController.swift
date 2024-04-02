@@ -24,7 +24,7 @@ public class SuggestionsWindowController: NSWindowController {
     )
 
     private var viewControllers: [NSViewController] = []
-    private var trackingAreas: [AnyHashable] = []
+    private var trackingAreas: [NSTrackingArea] = []
     private var localMouseDownEventMonitor: Any?
     private var lostFocusObserver: Any?
 
@@ -320,10 +320,7 @@ public class SuggestionsWindowController: NSWindowController {
         selectedView = nil
         viewControllers.forEach { $0.view.removeFromSuperview() }
         viewControllers.removeAll()
-        for trackingArea in trackingAreas {
-            guard let nsTrackingArea = trackingArea as? NSTrackingArea else { continue }
-            contentView?.removeTrackingArea(nsTrackingArea)
-        }
+        trackingAreas.forEach { contentView?.removeTrackingArea($0) }
         trackingAreas.removeAll()
 
         // Iterate through each suggestion creating a view for each entry.
@@ -347,11 +344,9 @@ public class SuggestionsWindowController: NSWindowController {
             guard let view = viewController.suggestionView else { continue }
             view.frame = frame
             contentView?.addSubview(view)
-            // Don't forget to create the tracking area.
-            let trackingArea = trackingArea(for: view) as? NSTrackingArea
-            if let anArea = trackingArea {
-                contentView?.addTrackingArea(anArea)
-                trackingAreas.append(anArea)
+            if let trackingArea = trackingArea(for: view) as? NSTrackingArea {
+                contentView?.addTrackingArea(trackingArea)
+                trackingAreas.append(trackingArea)
             }
             viewController.representedObject = entry
             viewControllers.append(viewController)
