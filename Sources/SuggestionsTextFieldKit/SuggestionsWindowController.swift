@@ -12,7 +12,20 @@ import Foundation
 
 public class SuggestionsWindowController: NSWindowController {
     public var parentTextField: NSTextField? = nil
-    public var dataSource: SuggestionsDataSource? = nil
+    public var dataSource: SuggestionsDataSource? = nil {
+        didSet {
+            let notificationCenter = NotificationCenter.default
+            notificationCenter.removeObserver(
+                self, name: SuggestionsChangedNotificationName, object: oldValue
+            )
+            notificationCenter.addObserver(
+                forName: SuggestionsChangedNotificationName,
+                object: dataSource,
+                queue: OperationQueue.current,
+                using: { notification in self.layoutSuggestions() }
+            )
+        }
+    }
 
     // What to do when choice is made
     public var selectionHandler: (@Sendable (Suggestion?) -> ())?
