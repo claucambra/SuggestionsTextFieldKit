@@ -8,6 +8,7 @@
 import AppKit
 import Foundation
 
-protocol SuggestionsDataSource: NSTableViewDataSource {
+protocol SuggestionsDataSource {
     var inputString: String { get set }
+    var suggestions: [Suggestion] { get }
 }
