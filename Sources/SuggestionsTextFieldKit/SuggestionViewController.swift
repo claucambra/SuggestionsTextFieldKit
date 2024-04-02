@@ -9,6 +9,8 @@ import AppKit
 import Foundation
 
 class SuggestionViewController: NSViewController {
+    var suggestionView: SuggestionView? { view as? SuggestionView }
+
     init() {
         super.init(nibName: nil, bundle: nil)
     }
@@ -24,7 +26,7 @@ class SuggestionViewController: NSViewController {
     override var representedObject: Any? {
         didSet {
             guard let representedObject = representedObject as? Suggestion,
-                  let view = view as? SuggestionView
+                  let view = suggestionView
             else { return }
 
             view.label.stringValue = representedObject.displayText
