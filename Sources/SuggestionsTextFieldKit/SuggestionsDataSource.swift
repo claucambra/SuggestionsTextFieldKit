@@ -8,7 +8,7 @@
 import AppKit
 import Foundation
 
-protocol SuggestionsDataSource {
+public protocol SuggestionsDataSource {
     var inputString: String { get set }
     var suggestions: [Suggestion] { get }
 }

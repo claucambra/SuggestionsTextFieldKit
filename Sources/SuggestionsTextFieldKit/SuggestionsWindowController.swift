@@ -10,9 +10,9 @@ import Foundation
 
 // Thanks to John Brayton and his custom menus implementation
 
-class SuggestionsWindowController: NSWindowController {
-    var parentTextField: NSTextField? = nil
-    var dataSource: SuggestionsDataSource? = nil
+public class SuggestionsWindowController: NSWindowController {
+    public var parentTextField: NSTextField? = nil
+    public var dataSource: SuggestionsDataSource? = nil
 
     // What to do when choice is made
     var action: Selector? = nil
@@ -38,7 +38,7 @@ class SuggestionsWindowController: NSWindowController {
         }
     }
 
-    convenience init() {
+    public convenience init() {
         self.init()
         self.window = suggestionsWindow
 
@@ -54,7 +54,7 @@ class SuggestionsWindowController: NSWindowController {
     // MARK: - Mouse handling
 
     // The mouse is now over one of our child image views. Update selection and send action.
-    override func mouseEntered(with event: NSEvent) {
+    public override func mouseEntered(with event: NSEvent) {
         let view: NSView?
         if let userData = event.trackingArea?.userInfo as? [String: NSView] {
             view = userData[kTrackerKey]!
@@ -66,21 +66,21 @@ class SuggestionsWindowController: NSWindowController {
 
     // The mouse has left one of our child image views.
     // Set the selection to no selection and send action.
-    override func mouseExited(with event: NSEvent) {
+    public override func mouseExited(with event: NSEvent) {
         userSetSelectedView(nil)
     }
 
     // The user released the mouse button. Force the parent text field to send its return action.
     // Notice that there is no mouseDown: implementation. That is because the user may hold the
     // mouse down and drag into another view.
-    override func mouseUp(with theEvent: NSEvent) {
+    public override func mouseUp(with theEvent: NSEvent) {
         parentTextField?.validateEditing()
         parentTextField?.abortEditing()
         parentTextField?.sendAction(parentTextField?.action, to: parentTextField?.target)
         cancelSuggestions()
     }
 
-    override func mouseDragged(with event: NSEvent) {
+    public override func mouseDragged(with event: NSEvent) {
         super.mouseDragged(with: event)
         guard let contentView = self.window?.contentView as? SuggestionsWindowContentView else {
             userSetSelectedView(nil)
@@ -121,7 +121,7 @@ class SuggestionsWindowController: NSWindowController {
 
     // Move the selection up and send action.
 
-    override func moveUp(_ sender: Any?) {
+    public override func moveUp(_ sender: Any?) {
         var previousView: NSView? = nil
         var viewWasSelected = false
 
@@ -137,7 +137,7 @@ class SuggestionsWindowController: NSWindowController {
     }
 
     // Move the selection down and send action.
-    override func moveDown(_ sender: Any?) {
+    public override func moveDown(_ sender: Any?) {
         var previousView: NSView? = nil
         for viewController in viewControllers.reversed() {
             let view = viewController.view
@@ -149,14 +149,14 @@ class SuggestionsWindowController: NSWindowController {
         }
     }
 
-    func userSetSelectedView(_ view: NSView?) {
+    private func userSetSelectedView(_ view: NSView?) {
         selectedView = view as? SuggestionView
         NSApp.sendAction(action!, to: target, from: self)
     }
 
     // MARK: - Handling of window relative to textfield
     
-    func begin(for parentTextField: NSTextField) {
+    public func begin(for parentTextField: NSTextField) {
         guard let parentWindow = parentTextField.window,
               let parentSuperview = parentTextField.superview
         else {
@@ -267,7 +267,7 @@ class SuggestionsWindowController: NSWindowController {
     // Order out the suggestion window, disconnect the accessibility logical relationship and 
     // dismantle any observers for auto cancel.
     // NOTE: It is safe to call this method even if the suggestions window is not currently visible.
-    func cancelSuggestions() {
+    public func cancelSuggestions() {
         if let parentTextField = self.parentTextField, suggestionsWindow.isVisible {
             if let unignoredAccessibilityDescendant = NSAccessibility.unignoredDescendant(
                 of: parentTextField

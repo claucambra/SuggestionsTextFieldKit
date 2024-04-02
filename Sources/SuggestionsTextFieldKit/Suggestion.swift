@@ -7,8 +7,8 @@
 
 import Foundation
 
-struct Suggestion {
-    let imageName: String
-    let displayText: String
-    let data: Any
+public struct Suggestion {
+    public let imageName: String
+    public let displayText: String
+    public let data: Any
 }
