@@ -337,7 +337,8 @@ public class SuggestionsWindowController: NSWindowController {
         )
 
         guard let suggestions = dataSource?.suggestions else { return }
-        // Offset the Y posistion so that the suggestion view does not try to draw past the rounded corners.
+        // Offset the Y posistion so that the suggestion view does not try to draw past the rounded 
+        // corners.
         for entry in suggestions {
             frame.origin.y += frame.size.height
             let viewController = SuggestionViewController()
