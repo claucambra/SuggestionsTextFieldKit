@@ -14,10 +14,16 @@ public class SuggestionsTextFieldDelegate: NSObject, NSTextFieldDelegate {
     public func controlTextDidBeginEditing(_ notification: Notification) {
         guard let control = notification.object as? NSControl else { return }
         suggestionsWindowController?.dataSource?.inputString = control.stringValue
+        if suggestionsWindowController?.window?.isVisible == false {
+            suggestionsWindowController?.showWindow(self)
+        }
     }
 
     public func controlTextDidChange(_ notification: Notification) {
         guard let control = notification.object as? NSControl else { return }
         suggestionsWindowController?.dataSource?.inputString = control.stringValue
+        if suggestionsWindowController?.window?.isVisible == false {
+            suggestionsWindowController?.showWindow(self)
+        }
     }
 }
