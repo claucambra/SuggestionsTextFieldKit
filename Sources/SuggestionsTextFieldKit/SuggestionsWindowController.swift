@@ -35,6 +35,7 @@ public class SuggestionsWindowController: NSWindowController {
         }
         return nil
     }
+    public var confirmationHandler: (@Sendable (Suggestion?) -> ())?
 
     private let kTrackerKey = "whichImageView"
     private let suggestionsWindow = SuggestionsWindow(
@@ -95,6 +96,7 @@ public class SuggestionsWindowController: NSWindowController {
         parentTextField?.validateEditing()
         parentTextField?.abortEditing()
         parentTextField?.sendAction(parentTextField?.action, to: parentTextField?.target)
+        confirmationHandler?(selectedSuggestion)
         cancelSuggestions()
     }
 
