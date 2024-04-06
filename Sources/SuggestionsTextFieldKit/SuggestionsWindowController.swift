@@ -57,10 +57,12 @@ public class SuggestionsWindowController: NSWindowController {
     }
 
     public init() {
-        super.init(window: suggestionsWindow)
-        let contentView = SuggestionsWindowContentView()
-        suggestionsWindow.contentView = contentView
-        contentView.autoresizesSubviews = false
+        super.init(window:
+            SuggestionsWindow(contentRect: .init(origin: .zero, size: .zero), defer: true)
+        )
+        self.window?.contentView = SuggestionsWindowContentView()
+        self.window?.contentView?.autoresizesSubviews = false
+        self.window?.isReleasedWhenClosed = false
     }
 
     required init?(coder: NSCoder) {
@@ -174,10 +176,9 @@ public class SuggestionsWindowController: NSWindowController {
     
     public func begin(for parentTextField: NSTextField) {
         guard let parentWindow = parentTextField.window,
-              let parentSuperview = parentTextField.superview
-        else {
-            return
-        }
+              let parentSuperview = parentTextField.superview,
+              let suggestionsWindow = self.window as? SuggestionsWindow
+        else { return }
 
         // Make the menu extend 5 pixels out to the left and right of the search box. This
         // makes the menu item icons align vertically with the search icon.
@@ -284,7 +285,10 @@ public class SuggestionsWindowController: NSWindowController {
     // dismantle any observers for auto cancel.
     // NOTE: It is safe to call this method even if the suggestions window is not currently visible.
     public func cancelSuggestions() {
-        if let parentTextField = self.parentTextField, suggestionsWindow.isVisible {
+        if let parentTextField = self.parentTextField,
+           let suggestionsWindow = self.window as? SuggestionsWindow,
+           suggestionsWindow.isVisible
+        {
             if let unignoredAccessibilityDescendant = NSAccessibility.unignoredDescendant(
                 of: parentTextField
             ) {
@@ -329,6 +333,7 @@ public class SuggestionsWindowController: NSWindowController {
     }
 
     private func layoutSuggestions() {
+        guard let suggestionsWindow = self.window as? SuggestionsWindow else { return }
         let contentView = suggestionsWindow.contentView as? SuggestionsWindowContentView
         // Remove any existing suggestion view and associated tracking area, set selection to nil
         selectedView = nil
