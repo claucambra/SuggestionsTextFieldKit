@@ -56,7 +56,6 @@ public class SuggestionsTextFieldDelegate: NSObject, NSTextFieldDelegate {
     }
 
     public func controlTextDidEndEditing(_ notification: Notification) {
-        guard let control = notification.object as? NSControl else { return }
         if suggestionsWindowController?.window?.isVisible == true {
             suggestionsWindowController?.close()
         }
