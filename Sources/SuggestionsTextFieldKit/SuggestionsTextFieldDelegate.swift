@@ -63,4 +63,35 @@ public class SuggestionsTextFieldDelegate: NSObject, NSTextFieldDelegate {
     public func controlTextDidEndEditing(_ notification: Notification) {
         suggestionsWindowController?.cancelSuggestions()
     }
+
+    public func control(
+        _ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector
+    ) -> Bool {
+        if commandSelector == #selector(NSResponder.moveUp(_:)) {
+            // Move up in the suggested selections list
+            suggestionsWindowController?.moveUp(textView)
+            return true
+        }
+
+        if commandSelector == #selector(NSResponder.moveDown(_:)) {
+            // Move down in the suggested selections list
+            suggestionsWindowController?.moveDown(textView)
+            return true
+        }
+
+        // This is "autocomplete" functionality, invoked when the user presses option-escaped.
+        // By overriding this command we prevent AppKit's auto completion and can respond to
+        // the user's intention by showing or cancelling our custom suggestions window.
+        if commandSelector == #selector(NSResponder.complete(_:)) {
+            if suggestionsWindowController?.window?.isVisible == true {
+                suggestionsWindowController?.cancelSuggestions()
+            } else {
+                suggestionsWindowController?.enableSuggestions()
+            }
+            return true
+        }
+        // This is a command that we don't specifically handle, let the field editor do the 
+        // appropriate thing.
+        return false
+    }
 }
