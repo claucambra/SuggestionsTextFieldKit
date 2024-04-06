@@ -37,27 +37,34 @@ public class SuggestionsTextFieldDelegate: NSObject, NSTextFieldDelegate {
             suggestionsWindowController = SuggestionsWindowController()
         }
 
-        suggestionsWindowController?.dataSource?.inputString = control.stringValue
+        suggestionsDataSource?.inputString = control.stringValue
 
-        if !control.stringValue.isEmpty, suggestionsWindowController?.window?.isVisible == false {
-            suggestionsWindowController?.showWindow(self)
+        if !control.stringValue.isEmpty {
+            suggestionsWindowController?.repositionWindow()
+            suggestionsWindowController?.window?.setIsVisible(true)
+            suggestionsWindowController?.window?.orderFront(self)
         }
     }
 
     public func controlTextDidChange(_ notification: Notification) {
         guard let control = notification.object as? NSControl else { return }
-        suggestionsWindowController?.dataSource?.inputString = control.stringValue
 
-        if control.stringValue.isEmpty, suggestionsWindowController?.window?.isVisible == true {
-            suggestionsWindowController?.close()
-        } else if suggestionsWindowController?.window?.isVisible == false {
-            suggestionsWindowController?.showWindow(self)
+        if suggestionsWindowController == nil {
+            suggestionsWindowController = SuggestionsWindowController()
+        }
+
+        suggestionsDataSource?.inputString = control.stringValue
+
+        if control.stringValue.isEmpty {
+            suggestionsWindowController?.window?.orderOut(self)
+        } else {
+            suggestionsWindowController?.repositionWindow()
+            suggestionsWindowController?.window?.setIsVisible(true)
+            suggestionsWindowController?.window?.orderFront(self)
         }
     }
 
     public func controlTextDidEndEditing(_ notification: Notification) {
-        if suggestionsWindowController?.window?.isVisible == true {
-            suggestionsWindowController?.close()
-        }
+        suggestionsWindowController?.window?.orderOut(self)
     }
 }
