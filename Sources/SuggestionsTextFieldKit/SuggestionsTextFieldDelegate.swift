@@ -14,7 +14,7 @@ public class SuggestionsTextFieldDelegate: NSObject, NSTextFieldDelegate {
     public func controlTextDidBeginEditing(_ notification: Notification) {
         guard let control = notification.object as? NSControl else { return }
         suggestionsWindowController?.dataSource?.inputString = control.stringValue
-        if suggestionsWindowController?.window?.isVisible == false {
+        if !control.stringValue.isEmpty, suggestionsWindowController?.window?.isVisible == false {
             suggestionsWindowController?.showWindow(self)
         }
     }
