@@ -12,89 +12,7 @@ import OSLog
 // Thanks to John Brayton and his custom menus implementation
 
 public class SuggestionsWindowController: NSWindowController {
-    public var parentTextField: NSTextField? = nil {
-        didSet {
-            repositionWindow()
-            layoutSuggestions()
-            guard let suggestionsWindow = self.window as? SuggestionsWindow,
-                  let parentWindow = parentTextField?.window
-            else { return }
-
-            // The height of the window will be adjusted in -layoutSuggestions.
-            // add the suggestion window as a child window so that it plays nice with Expose
-            parentWindow.addChildWindow(suggestionsWindow, ordered: .above)
-
-            // The window must know its accessibility parent.
-            // The control must know the window and its accessibility children.
-            // Note that views are often ignored, so we want the unignored descendant - usually a cell.
-            // Finally, post that we have created the unignored decendant of the suggestions window
-            let unignoredAccessDescendant = NSAccessibility.unignoredDescendant(of: parentTextField)
-            suggestionsWindow.parentElement = unignoredAccessDescendant
-            // TODO:
-            // (unignoredAccessDescendant as? SearchFieldCell)?.suggestionsWindow = suggestionsWindow
-            if let unignoredAccessDescendant {
-                NSAccessibility.post(element: unignoredAccessDescendant, notification: .created)
-            }
-
-            // Setup auto cancellation if the user clicks outside the suggestion window and parent text
-            // field.
-            // NOTE: this is a local event monitor and will only catch clicks in windows that belong to
-            // this application. We use another technique below to catch clicks in other application
-            // windows.
-            localMouseDownEventMonitor = NSEvent.addLocalMonitorForEvents(
-                matching: [
-                    NSEvent.EventTypeMask.leftMouseDown,
-                    NSEvent.EventTypeMask.rightMouseDown,
-                    NSEvent.EventTypeMask.otherMouseDown
-                ],
-                handler: { (_ event: NSEvent) -> NSEvent? in
-                    guard event.window != suggestionsWindow else { return event }
-
-                    if event.window == parentWindow {
-                        // Clicks in the parent window should either be in the parent text field or
-                        // dismiss the suggestions window. We want clicks to occur in the parent text
-                        // field so that the user can move the caret or select the search text.
-
-                        // Use hit testing to determine if the click is in the parent text field.
-                        // NOTE: when editing an NSTextField, there is a field editor that covers the
-                        // text field that is performing the actual editing. Therefore, we need to check
-                        // for the field editor when doing hit testing.
-                        let contentView = parentWindow.contentView
-                        let locationTest = contentView?.convert(event.locationInWindow, from: nil)
-                        let hitView = contentView?.hitTest(locationTest ?? NSPoint.zero)
-                        let fieldEditor = self.parentTextField?.currentEditor()
-                        if hitView != self.parentTextField,
-                           (fieldEditor != nil && hitView != fieldEditor)
-                        {
-                            // Since the click is not in the parent text field, return nil, so the
-                            // parent window does not try to process it, + cancel the suggestion window.
-                            self.cancelSuggestions()
-                        }
-                    } else {
-                        // Not in the suggestion window, and not in the parent window. This must be
-                        // another window or palette for this application.
-                        self.cancelSuggestions()
-                    }
-                    return event
-                }
-            )
-
-            // As per the documentation, do not retain event monitors.
-            // We also need to auto cancel when the window loses key status. This may be done via a
-            // mouse click in another window, or via the keyboard (cmd-~ or cmd-tab), or a notification.
-            // Observing NSWindowDidResignKeyNotification catches all of these cases and the mouse down
-            // event monitor catches the other cases.
-            lostFocusObserver = NotificationCenter.default.addObserver(
-                forName: NSWindow.didResignKeyNotification,
-                object: parentWindow,
-                queue: nil,
-                using: { (_ arg1: Notification) -> Void in
-                    // lost key status, cancel the suggestion window
-                    self.cancelSuggestions()
-                }
-            )
-        }
-    }
+    public var parentTextField: NSTextField? = nil
     public var dataSource: SuggestionsDataSource? = nil {
         didSet {
             let notificationCenter = NotificationCenter.default
@@ -258,6 +176,89 @@ public class SuggestionsWindowController: NSWindowController {
     }
 
     // MARK: - Handling of window relative to textfield
+
+    public func enableSuggestions() {
+        repositionWindow()
+        layoutSuggestions()
+
+        guard let suggestionsWindow = self.window as? SuggestionsWindow,
+              let parentWindow = parentTextField?.window
+        else { return }
+
+        // The height of the window will be adjusted in -layoutSuggestions.
+        // add the suggestion window as a child window so that it plays nice with Expose
+        parentWindow.addChildWindow(suggestionsWindow, ordered: .above)
+
+        // The window must know its accessibility parent.
+        // The control must know the window and its accessibility children.
+        // Note that views are often ignored, so we want the unignored descendant - usually a cell.
+        // Finally, post that we have created the unignored decendant of the suggestions window
+        let unignoredAccessDescendant = NSAccessibility.unignoredDescendant(of: parentTextField)
+        suggestionsWindow.parentElement = unignoredAccessDescendant
+        // TODO:
+        // (unignoredAccessDescendant as? SearchFieldCell)?.suggestionsWindow = suggestionsWindow
+        if let unignoredAccessDescendant {
+            NSAccessibility.post(element: unignoredAccessDescendant, notification: .created)
+        }
+
+        // Setup auto cancellation if the user clicks outside the suggestion window and parent text
+        // field.
+        // NOTE: this is a local event monitor and will only catch clicks in windows that belong to
+        // this application. We use another technique below to catch clicks in other application
+        // windows.
+        localMouseDownEventMonitor = NSEvent.addLocalMonitorForEvents(
+            matching: [
+                NSEvent.EventTypeMask.leftMouseDown,
+                NSEvent.EventTypeMask.rightMouseDown,
+                NSEvent.EventTypeMask.otherMouseDown
+            ],
+            handler: { (_ event: NSEvent) -> NSEvent? in
+                guard event.window != suggestionsWindow else { return event }
+                guard event.window == parentWindow else {
+                    // Not in the suggestion window, and not in the parent window. This must be
+                    // another window or palette for this application.
+                    self.cancelSuggestions()
+                    return event
+                }
+
+                // Clicks in the parent window should either be in the parent text field or
+                // dismiss the suggestions window. We want clicks to occur in the parent text
+                // field so that the user can move the caret or select the search text.
+
+                // Use hit testing to determine if the click is in the parent text field.
+                // NOTE: when editing an NSTextField, there is a field editor that covers the
+                // text field that is performing the actual editing. Therefore, we need to check
+                // for the field editor when doing hit testing.
+                let contentView = parentWindow.contentView
+                let locationTest = contentView?.convert(event.locationInWindow, from: nil)
+                let hitView = contentView?.hitTest(locationTest ?? NSPoint.zero)
+                let fieldEditor = self.parentTextField?.currentEditor()
+                if hitView != self.parentTextField,
+                   (fieldEditor != nil && hitView != fieldEditor)
+                {
+                    // Since the click is not in the parent text field, return nil, so the
+                    // parent window does not try to process it, + cancel the suggestion window.
+                    self.cancelSuggestions()
+                }
+                return event
+            }
+        )
+
+        // As per the documentation, do not retain event monitors.
+        // We also need to auto cancel when the window loses key status. This may be done via a
+        // mouse click in another window, or via the keyboard (cmd-~ or cmd-tab), or a notification.
+        // Observing NSWindowDidResignKeyNotification catches all of these cases and the mouse down
+        // event monitor catches the other cases.
+        lostFocusObserver = NotificationCenter.default.addObserver(
+            forName: NSWindow.didResignKeyNotification,
+            object: parentWindow,
+            queue: nil,
+            using: { (_ arg1: Notification) -> Void in
+                // lost key status, cancel the suggestion window
+                self.cancelSuggestions()
+            }
+        )
+    }
 
     public func repositionWindow() {
         guard let parentTextField = parentTextField,

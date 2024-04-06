@@ -40,9 +40,7 @@ public class SuggestionsTextFieldDelegate: NSObject, NSTextFieldDelegate {
         suggestionsDataSource?.inputString = control.stringValue
 
         if !control.stringValue.isEmpty {
-            suggestionsWindowController?.repositionWindow()
-            suggestionsWindowController?.window?.setIsVisible(true)
-            suggestionsWindowController?.window?.orderFront(self)
+            suggestionsWindowController?.enableSuggestions()
         }
     }
 
@@ -56,15 +54,13 @@ public class SuggestionsTextFieldDelegate: NSObject, NSTextFieldDelegate {
         suggestionsDataSource?.inputString = control.stringValue
 
         if control.stringValue.isEmpty {
-            suggestionsWindowController?.window?.orderOut(self)
+            suggestionsWindowController?.cancelSuggestions()
         } else {
-            suggestionsWindowController?.repositionWindow()
-            suggestionsWindowController?.window?.setIsVisible(true)
-            suggestionsWindowController?.window?.orderFront(self)
+            suggestionsWindowController?.enableSuggestions()
         }
     }
 
     public func controlTextDidEndEditing(_ notification: Notification) {
-        suggestionsWindowController?.window?.orderOut(self)
+        suggestionsWindowController?.cancelSuggestions()
     }
 }
