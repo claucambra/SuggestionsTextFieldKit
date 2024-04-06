@@ -277,12 +277,11 @@ public class SuggestionsWindowController: NSWindowController {
         location = parentWindow.convertToScreen(
             NSRect(
                 x: location.x - horizontalNegativeInset,
-                y: location.y - parentTextField.frame.size.height,
+                y: location.y,
                 width: 0,
                 height: 0
             )
         ).origin
-        location.y -= 2.0
 
         // Nudge the suggestion list window down so that it does not overlap the parent view.
         suggestionsWindow.setFrame(frame, display: false)
