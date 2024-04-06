@@ -21,7 +21,10 @@ public class SuggestionsTextFieldDelegate: NSObject, NSTextFieldDelegate {
         didSet { suggestionsWindowController?.dataSource = suggestionsDataSource }
     }
     public var targetTextField: NSTextField? {
-        didSet { suggestionsWindowController?.parentTextField = targetTextField }
+        didSet {
+            suggestionsWindowController?.parentTextField = targetTextField
+            targetTextField?.delegate = self
+        }
     }
     public var selectionHandler: (@Sendable (Suggestion?) -> ())? {
         didSet { suggestionsWindowController?.selectionHandler = selectionHandler }
