@@ -24,6 +24,8 @@ public class SuggestionsTextFieldDelegate: NSObject, NSTextFieldDelegate {
         didSet {
             suggestionsWindowController?.parentTextField = targetTextField
             targetTextField?.delegate = self
+            targetTextField?.target = self
+            targetTextField?.action = #selector(acceptSuggestion(sender:))
         }
     }
     public var selectionHandler: (@Sendable (Suggestion?) -> ())? {
@@ -96,5 +98,10 @@ public class SuggestionsTextFieldDelegate: NSObject, NSTextFieldDelegate {
         // This is a command that we don't specifically handle, let the field editor do the 
         // appropriate thing.
         return false
+    }
+
+    @objc public func acceptSuggestion(sender: Any) {
+        guard let suggestionsWindowController = suggestionsWindowController else { return }
+        confirmationHandler?(suggestionsWindowController.selectedSuggestion)
     }
 }
