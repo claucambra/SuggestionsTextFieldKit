@@ -29,4 +29,11 @@ public class SuggestionsTextFieldDelegate: NSObject, NSTextFieldDelegate {
             suggestionsWindowController?.showWindow(self)
         }
     }
+
+    public func controlTextDidEndEditing(_ notification: Notification) {
+        guard let control = notification.object as? NSControl else { return }
+        if suggestionsWindowController?.window?.isVisible == true {
+            suggestionsWindowController?.close()
+        }
+    }
 }
