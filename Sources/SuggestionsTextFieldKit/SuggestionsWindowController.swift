@@ -39,9 +39,6 @@ public class SuggestionsWindowController: NSWindowController {
     public var confirmationHandler: (@Sendable (Suggestion?) -> ())?
 
     private let kTrackerKey = "whichImageView"
-    private let suggestionsWindow = SuggestionsWindow(
-        contentRect: .init(origin: .zero, size: .zero), defer: true
-    )
 
     private var viewControllers: [NSViewController] = []
     private var trackingAreas: [NSTrackingArea] = []
