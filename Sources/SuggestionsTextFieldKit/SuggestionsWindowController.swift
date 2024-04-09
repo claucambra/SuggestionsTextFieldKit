@@ -190,7 +190,9 @@ public class SuggestionsWindowController: NSWindowController {
         // The control must know the window and its accessibility children.
         // Note that views are often ignored, so we want the unignored descendant - usually a cell.
         // Finally, post that we have created the unignored decendant of the suggestions window
-        let unignoredAccessDescendant = NSAccessibility.unignoredDescendant(of: parentTextField)
+        let unignoredAccessDescendant = NSAccessibility.unignoredDescendant(
+            of: parentTextField as Any
+        )
         suggestionsWindow.parentElement = unignoredAccessDescendant
         // TODO:
         // (unignoredAccessDescendant as? SearchFieldCell)?.suggestionsWindow = suggestionsWindow
