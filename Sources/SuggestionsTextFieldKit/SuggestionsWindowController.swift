@@ -42,7 +42,7 @@ public class SuggestionsWindowController: NSWindowController {
 
     private let kTrackerKey = "whichImageView"
 
-    private var viewControllers: [NSViewController] = []
+    private(set) var viewControllers: [NSViewController] = []
     private var trackingAreas: [NSTrackingArea] = []
     private var localMouseDownEventMonitor: Any?
     private var lostFocusObserver: Any?
