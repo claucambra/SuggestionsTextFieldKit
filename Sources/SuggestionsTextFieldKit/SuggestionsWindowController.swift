@@ -15,6 +15,7 @@ public class SuggestionsWindowController: NSWindowController {
     public var parentTextField: NSTextField? = nil
     public var dataSource: SuggestionsDataSource? = nil {
         didSet {
+            guard let dataSource = dataSource else { return }
             let notificationCenter = NotificationCenter.default
             notificationCenter.removeObserver(
                 self, name: SuggestionsChangedNotificationName, object: oldValue
@@ -25,6 +26,7 @@ public class SuggestionsWindowController: NSWindowController {
                 queue: OperationQueue.current,
                 using: { notification in self.layoutSuggestions() }
             )
+            layoutSuggestions()
         }
     }
 
