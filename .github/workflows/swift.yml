@@ -16,15 +16,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - uses: swift-actions/setup-swift@v2
+    # Use the same Xcode toolchain to build, test, and export coverage.
     - name: Build
-      run: swift build -v
+      run: xcrun swift build -v
     - name: Run tests
-      run: swift test --enable-code-coverage -v
-    - name: List Xcode installations
-      run: sudo ls -1 /Applications | grep "Xcode"
-    - name: Select Xcode 15.3
-      run: sudo xcode-select -s /Applications/Xcode_15.3.app/Contents/Developer
+      run: xcrun swift test --enable-code-coverage -v
     - name: Gather code coverage
       run: xcrun llvm-cov export -format="lcov" .build/debug/SuggestionsTextFieldKitPackageTests.xctest/Contents/MacOS/SuggestionsTextFieldKitPackageTests -instr-profile .build/debug/codecov/default.profdata > coverage_report.lcov
     - name: Upload coverage to Codecov
