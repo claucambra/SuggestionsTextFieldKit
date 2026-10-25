@@ -36,29 +36,36 @@ public class SuggestionsTextFieldDelegate: NSObject, NSTextFieldDelegate {
     }
 
     public func controlTextDidBeginEditing(_ notification: Notification) {
-        guard let control = notification.object as? NSControl else { return }
+        guard let control = notification.object as? NSControl,
+              let fieldEditor = control.currentEditor()
+        else { return }
+        // Reading the control's stringValue validates and commits the current edit.
+        let inputString = fieldEditor.string
 
         if suggestionsWindowController == nil {
             suggestionsWindowController = SuggestionsWindowController()
         }
 
-        suggestionsDataSource?.inputString = control.stringValue
+        suggestionsDataSource?.inputString = inputString
 
-        if !control.stringValue.isEmpty {
+        if !inputString.isEmpty {
             suggestionsWindowController?.enableSuggestions()
         }
     }
 
     public func controlTextDidChange(_ notification: Notification) {
-        guard let control = notification.object as? NSControl else { return }
+        guard let control = notification.object as? NSControl,
+              let fieldEditor = control.currentEditor()
+        else { return }
+        let inputString = fieldEditor.string
 
         if suggestionsWindowController == nil {
             suggestionsWindowController = SuggestionsWindowController()
         }
 
-        suggestionsDataSource?.inputString = control.stringValue
+        suggestionsDataSource?.inputString = inputString
 
-        if control.stringValue.isEmpty {
+        if inputString.isEmpty {
             suggestionsWindowController?.cancelSuggestions()
         } else {
             suggestionsWindowController?.enableSuggestions()
