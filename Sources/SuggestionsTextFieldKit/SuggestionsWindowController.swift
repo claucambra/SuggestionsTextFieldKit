@@ -20,7 +20,13 @@ public class SuggestionsWindowController: NSWindowController {
                 notificationCenter.removeObserver(suggestionsChangedObserver)
                 self.suggestionsChangedObserver = nil
             }
-            guard let dataSource else { return }
+            guard let dataSource else {
+                if oldValue != nil {
+                    layoutSuggestions()
+                    cancelSuggestions()
+                }
+                return
+            }
             suggestionsChangedObserver = notificationCenter.addObserver(
                 forName: SuggestionsChangedNotificationName,
                 object: dataSource,
