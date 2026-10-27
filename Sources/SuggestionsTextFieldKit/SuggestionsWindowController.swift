@@ -15,16 +15,17 @@ public class SuggestionsWindowController: NSWindowController {
     public var parentTextField: NSTextField? = nil
     public var dataSource: SuggestionsDataSource? = nil {
         didSet {
-            guard let dataSource = dataSource else { return }
             let notificationCenter = NotificationCenter.default
-            notificationCenter.removeObserver(
-                self, name: SuggestionsChangedNotificationName, object: oldValue
-            )
-            notificationCenter.addObserver(
+            if let suggestionsChangedObserver {
+                notificationCenter.removeObserver(suggestionsChangedObserver)
+                self.suggestionsChangedObserver = nil
+            }
+            guard let dataSource else { return }
+            suggestionsChangedObserver = notificationCenter.addObserver(
                 forName: SuggestionsChangedNotificationName,
                 object: dataSource,
                 queue: OperationQueue.current,
-                using: { notification in self.layoutSuggestions() }
+                using: { [weak self] _ in self?.layoutSuggestions() }
             )
             layoutSuggestions()
         }
@@ -46,6 +47,7 @@ public class SuggestionsWindowController: NSWindowController {
     private var trackingAreas: [NSTrackingArea] = []
     private var localMouseDownEventMonitor: Any?
     private var lostFocusObserver: Any?
+    private var suggestionsChangedObserver: NSObjectProtocol?
 
     private var selectedView: SuggestionView? {
         didSet {
@@ -68,6 +70,13 @@ public class SuggestionsWindowController: NSWindowController {
 
     required init?(coder: NSCoder) {
         super.init(coder: coder)
+    }
+
+    deinit {
+        if let suggestionsChangedObserver {
+            NotificationCenter.default.removeObserver(suggestionsChangedObserver)
+        }
+        dismissSuggestions()
     }
 
     // MARK: - Mouse handling
@@ -298,6 +307,10 @@ public class SuggestionsWindowController: NSWindowController {
     // dismantle any observers for auto cancel.
     // NOTE: It is safe to call this method even if the suggestions window is not currently visible.
     public func cancelSuggestions() {
+        dismissSuggestions()
+    }
+
+    private func dismissSuggestions() {
         if let parentTextField = self.parentTextField,
            let suggestionsWindow = self.window as? SuggestionsWindow,
            suggestionsWindow.isVisible
