@@ -230,15 +230,17 @@ public class SuggestionsWindowController: NSWindowController {
                 // NOTE: when editing an NSTextField, there is a field editor that covers the
                 // text field that is performing the actual editing. Therefore, we need to check
                 // for the field editor when doing hit testing.
-                let contentView = parentWindow.contentView
-                let locationTest = contentView?.convert(event.locationInWindow, from: nil)
-                let hitView = contentView?.hitTest(locationTest ?? NSPoint.zero)
+                guard let contentView = parentWindow.contentView else {
+                    self.cancelSuggestions()
+                    return event
+                }
+                let locationTest = contentView.convert(event.locationInWindow, from: nil)
+                let hitView = contentView.hitTest(locationTest)
                 let fieldEditor = self.parentTextField?.currentEditor()
                 if hitView != self.parentTextField,
-                   (fieldEditor != nil && hitView != fieldEditor)
+                   (fieldEditor == nil || hitView != fieldEditor)
                 {
-                    // Since the click is not in the parent text field, return nil, so the
-                    // parent window does not try to process it, + cancel the suggestion window.
+                    // Dismiss suggestions while allowing the parent window to process the click.
                     self.cancelSuggestions()
                 }
                 return event
@@ -326,12 +328,11 @@ public class SuggestionsWindowController: NSWindowController {
     }
 
     // Properly creates a tracking area for an image view.
-    private func trackingArea(for view: NSView?) -> Any? {
+    private func trackingArea(for view: NSView, in contentView: NSView) -> NSTrackingArea {
         // Make tracking data (to be stored in NSTrackingArea's userInfo) so we can later determine
         // the imageView without hit testing
-        var trackerData: [AnyHashable: Any]? = nil
-        if let view = view { trackerData = [kTrackerKey: view] }
-        let trackingRect = window!.contentView!.convert(view?.bounds ?? CGRect.zero, from: view)
+        let trackerData: [AnyHashable: Any] = [kTrackerKey: view]
+        let trackingRect = contentView.convert(view.bounds, from: view)
         let trackingOptions: NSTrackingArea.Options = [
             .enabledDuringMouseDrag, .mouseEnteredAndExited, .activeInActiveApp
         ]
@@ -344,24 +345,25 @@ public class SuggestionsWindowController: NSWindowController {
     }
 
     private func layoutSuggestions() {
-        guard let suggestionsWindow = self.window as? SuggestionsWindow else { return }
-        let contentView = suggestionsWindow.contentView as? SuggestionsWindowContentView
+        guard let suggestionsWindow = self.window as? SuggestionsWindow,
+              let contentView = suggestionsWindow.contentView as? SuggestionsWindowContentView
+        else { return }
         // Remove any existing suggestion view and associated tracking area, set selection to nil
         selectedView = nil
         viewControllers.forEach { $0.view.removeFromSuperview() }
         viewControllers.removeAll()
-        trackingAreas.forEach { contentView?.removeTrackingArea($0) }
+        trackingAreas.forEach { contentView.removeTrackingArea($0) }
         trackingAreas.removeAll()
 
         // Iterate through each suggestion creating a view for each entry.
         // The width of each suggestion view should match the width of the window.
-        var contentFrame = contentView?.frame
+        var contentFrame = contentView.frame
         let itemHeight: CGFloat = 20.0
         let topBottomMargin: CGFloat = 6.0
         var frame = NSRect(
             x: 0,
             y: topBottomMargin - itemHeight,
-            width: contentFrame?.width ?? 0,
+            width: contentFrame.width,
             height: itemHeight
         )
 
@@ -371,22 +373,21 @@ public class SuggestionsWindowController: NSWindowController {
         for entry in suggestions {
             frame.origin.y += frame.size.height
             let viewController = SuggestionViewController()
-            guard let view = viewController.suggestionView else { continue }
+            let view: NSView = viewController.view
             view.frame = frame
-            contentView?.addSubview(view)
-            if let trackingArea = trackingArea(for: view) as? NSTrackingArea {
-                contentView?.addTrackingArea(trackingArea)
-                trackingAreas.append(trackingArea)
-            }
+            contentView.addSubview(view)
+            let trackingArea = trackingArea(for: view, in: contentView)
+            contentView.addTrackingArea(trackingArea)
+            trackingAreas.append(trackingArea)
             viewController.representedObject = entry
             viewControllers.append(viewController)
         }
         // We have added all of the suggestion to the window. Now set the size of the window.
         // Don’t forget to account for the extra room needed the rounded corners.
-        contentFrame?.size.height = frame.maxY + topBottomMargin
-        var winFrame: NSRect = NSRect(origin: window!.frame.origin, size: window!.frame.size)
-        winFrame.origin.y = winFrame.maxY - contentFrame!.height
-        winFrame.size.height = contentFrame!.height
-        window?.setFrame(winFrame, display: true)
+        contentFrame.size.height = frame.maxY + topBottomMargin
+        var winFrame = suggestionsWindow.frame
+        winFrame.origin.y = winFrame.maxY - contentFrame.height
+        winFrame.size.height = contentFrame.height
+        suggestionsWindow.setFrame(winFrame, display: true)
     }
 }
