@@ -54,6 +54,7 @@ public class SuggestionsWindowController: NSWindowController {
     private var localMouseDownEventMonitor: Any?
     private var lostFocusObserver: Any?
     private var suggestionsChangedObserver: NSObjectProtocol?
+    private var isHandlingMouseConfirmation = false
 
     private var selectedView: SuggestionView? {
         didSet {
@@ -108,10 +109,21 @@ public class SuggestionsWindowController: NSWindowController {
     // Notice that there is no mouseDown: implementation. That is because the user may hold the
     // mouse down and drag into another view.
     public override func mouseUp(with theEvent: NSEvent) {
-        parentTextField?.validateEditing()
-        parentTextField?.abortEditing()
-        parentTextField?.sendAction(parentTextField?.action, to: parentTextField?.target)
-        confirmationHandler?(selectedSuggestion)
+        guard !isHandlingMouseConfirmation else { return }
+        isHandlingMouseConfirmation = true
+        let textField = parentTextField
+        let delegate = textField?.target as? SuggestionsTextFieldDelegate
+        let wasHandlingMouseConfirmation = delegate?.isHandlingMouseConfirmation ?? false
+        delegate?.isHandlingMouseConfirmation = true
+        defer {
+            delegate?.isHandlingMouseConfirmation = wasHandlingMouseConfirmation
+            isHandlingMouseConfirmation = false
+        }
+        let suggestion = selectedSuggestion
+        textField?.validateEditing()
+        textField?.abortEditing()
+        textField?.sendAction(textField?.action, to: textField?.target)
+        confirmationHandler?(suggestion)
         cancelSuggestions()
     }
 

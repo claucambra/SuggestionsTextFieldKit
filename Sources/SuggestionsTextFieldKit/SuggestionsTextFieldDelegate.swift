@@ -9,6 +9,9 @@ import AppKit
 import Foundation
 
 public class SuggestionsTextFieldDelegate: NSObject, NSTextFieldDelegate {
+    // The controller also confirms mouse acceptance after delivering the text field action.
+    var isHandlingMouseConfirmation = false
+
     public var suggestionsWindowController: SuggestionsWindowController? {
         didSet {
             suggestionsWindowController?.parentTextField = targetTextField
@@ -108,7 +111,9 @@ public class SuggestionsTextFieldDelegate: NSObject, NSTextFieldDelegate {
     }
 
     @objc public func acceptSuggestion(sender: Any) {
-        guard let suggestionsWindowController = suggestionsWindowController else { return }
+        guard let suggestionsWindowController = suggestionsWindowController,
+              !isHandlingMouseConfirmation
+        else { return }
         confirmationHandler?(suggestionsWindowController.selectedSuggestion)
     }
 }
