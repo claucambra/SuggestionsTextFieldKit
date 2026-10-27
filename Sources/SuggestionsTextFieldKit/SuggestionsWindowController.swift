@@ -196,8 +196,20 @@ public class SuggestionsWindowController: NSWindowController {
         layoutSuggestions()
 
         guard let suggestionsWindow = self.window as? SuggestionsWindow,
-              let parentWindow = parentTextField?.window
-        else { return }
+              let parentTextField = parentTextField,
+              let parentWindow = parentTextField.window
+        else {
+            if localMouseDownEventMonitor != nil || lostFocusObserver != nil {
+                cancelSuggestions()
+            }
+            return
+        }
+        // Text changes refresh the popup repeatedly during the same editing session.
+        // Reuse dismissal handlers while the visible popup remains in the same window.
+        if localMouseDownEventMonitor != nil || lostFocusObserver != nil {
+            if suggestionsWindow.parent === parentWindow, suggestionsWindow.isVisible { return }
+            cancelSuggestions()
+        }
 
         // The height of the window will be adjusted in -layoutSuggestions.
         // add the suggestion window as a child window so that it plays nice with Expose
@@ -228,12 +240,12 @@ public class SuggestionsWindowController: NSWindowController {
                 NSEvent.EventTypeMask.rightMouseDown,
                 NSEvent.EventTypeMask.otherMouseDown
             ],
-            handler: { (_ event: NSEvent) -> NSEvent? in
+            handler: { [weak self] (_ event: NSEvent) -> NSEvent? in
                 guard event.window != suggestionsWindow else { return event }
                 guard event.window == parentWindow else {
                     // Not in the suggestion window, and not in the parent window. This must be
                     // another window or palette for this application.
-                    self.cancelSuggestions()
+                    self?.cancelSuggestions()
                     return event
                 }
 
@@ -246,17 +258,17 @@ public class SuggestionsWindowController: NSWindowController {
                 // text field that is performing the actual editing. Therefore, we need to check
                 // for the field editor when doing hit testing.
                 guard let contentView = parentWindow.contentView else {
-                    self.cancelSuggestions()
+                    self?.cancelSuggestions()
                     return event
                 }
                 let locationTest = contentView.convert(event.locationInWindow, from: nil)
                 let hitView = contentView.hitTest(locationTest)
-                let fieldEditor = self.parentTextField?.currentEditor()
-                if hitView != self.parentTextField,
+                let fieldEditor = parentTextField.currentEditor()
+                if hitView != parentTextField,
                    (fieldEditor == nil || hitView != fieldEditor)
                 {
                     // Dismiss suggestions while allowing the parent window to process the click.
-                    self.cancelSuggestions()
+                    self?.cancelSuggestions()
                 }
                 return event
             }
@@ -271,9 +283,9 @@ public class SuggestionsWindowController: NSWindowController {
             forName: NSWindow.didResignKeyNotification,
             object: parentWindow,
             queue: nil,
-            using: { (_ arg1: Notification) -> Void in
+            using: { [weak self] (_ arg1: Notification) -> Void in
                 // lost key status, cancel the suggestion window
-                self.cancelSuggestions()
+                self?.cancelSuggestions()
             }
         )
     }
@@ -317,13 +329,12 @@ public class SuggestionsWindowController: NSWindowController {
     }
 
     private func dismissSuggestions() {
-        if let parentTextField = self.parentTextField,
-           let suggestionsWindow = self.window as? SuggestionsWindow,
-           suggestionsWindow.isVisible
-        {
-            if let unignoredAccessibilityDescendant = NSAccessibility.unignoredDescendant(
-                of: parentTextField
-            ) {
+        if let suggestionsWindow = self.window as? SuggestionsWindow {
+            if suggestionsWindow.isVisible,
+               let parentTextField = self.parentTextField,
+               let unignoredAccessibilityDescendant = NSAccessibility.unignoredDescendant(
+                   of: parentTextField
+               ) {
                 NSAccessibility.post(
                     element: unignoredAccessibilityDescendant, notification: .uiElementDestroyed
                 )
