@@ -12,7 +12,13 @@ import OSLog
 // Thanks to John Brayton and his custom menus implementation
 
 public class SuggestionsWindowController: NSWindowController {
-    public var parentTextField: NSTextField? = nil
+    public var parentTextField: NSTextField? = nil {
+        willSet {
+            if parentTextField != nil, parentTextField !== newValue {
+                cancelSuggestions()
+            }
+        }
+    }
     public var dataSource: SuggestionsDataSource? = nil {
         didSet {
             let notificationCenter = NotificationCenter.default

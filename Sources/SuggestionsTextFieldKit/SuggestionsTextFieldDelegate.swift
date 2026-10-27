@@ -25,6 +25,18 @@ public class SuggestionsTextFieldDelegate: NSObject, NSTextFieldDelegate {
     }
     public var targetTextField: NSTextField? {
         didSet {
+            guard oldValue !== targetTextField else { return }
+            if let oldValue {
+                if oldValue.delegate === self {
+                    oldValue.delegate = nil
+                }
+                if oldValue.target === self,
+                   oldValue.action == #selector(acceptSuggestion(sender:))
+                {
+                    oldValue.target = nil
+                    oldValue.action = nil
+                }
+            }
             suggestionsWindowController?.parentTextField = targetTextField
             targetTextField?.delegate = self
             targetTextField?.target = self
