@@ -13,18 +13,31 @@ class SuggestionsWindowContentView: NSView {
 
     required init?(coder decoder: NSCoder) {
         super.init(coder: decoder)
+        configureBackground()
     }
 
     override init(frame: NSRect) {
         super.init(frame: frame)
+        configureBackground()
+    }
 
-        let visualEffectView = NSVisualEffectView()
+    private func configureBackground() {
+        let visualEffectView = subviews.compactMap { $0 as? NSVisualEffectView }.first
+            ?? NSVisualEffectView()
         visualEffectView.translatesAutoresizingMaskIntoConstraints = false
         visualEffectView.blendingMode = .withinWindow
         visualEffectView.material = .menu
         visualEffectView.state = .active
 
-        addSubview(visualEffectView)
+        if visualEffectView.superview == nil {
+            addSubview(visualEffectView)
+        }
+        // Runtime constraints may be absent from archives. Replace any archived background
+        // constraints so both construction paths install one consistent set of edge constraints.
+        let backgroundConstraints = constraints.filter { constraint in
+            [constraint.firstItem, constraint.secondItem].contains { ($0 as? NSView) === visualEffectView }
+        }
+        removeConstraints(backgroundConstraints)
         addConstraints([
             visualEffectView.topAnchor.constraint(equalTo: topAnchor),
             visualEffectView.leadingAnchor.constraint(equalTo: leadingAnchor),
