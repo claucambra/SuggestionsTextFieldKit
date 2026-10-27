@@ -77,4 +77,16 @@ final class SuggestionViewControllerTests: XCTestCase {
         XCTAssertTrue(controller.view === customView)
         XCTAssertNil(controller.suggestionView)
     }
+
+    func testDecodingUnsupportedArchivedControllerFailsWithoutTrapping() throws {
+        let archive = try NSKeyedArchiver.archivedData(
+            withRootObject: SuggestionViewController(), requiringSecureCoding: false
+        )
+        let decoder = try NSKeyedUnarchiver(forReadingFrom: archive)
+        decoder.requiresSecureCoding = false
+        decoder.decodingFailurePolicy = .setErrorAndReturn
+        defer { decoder.finishDecoding() }
+
+        XCTAssertNil(decoder.decodeObject(forKey: NSKeyedArchiveRootObjectKey))
+    }
 }

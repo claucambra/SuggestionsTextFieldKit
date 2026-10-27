@@ -58,4 +58,16 @@ final class SuggestionViewTests: XCTestCase {
         XCTAssertEqual(view.backgroundView.frame.width - backgroundFrame.width, 120, accuracy: 0.001)
         XCTAssertEqual(view.label.lineBreakMode, .byTruncatingTail)
     }
+
+    func testDecodingUnsupportedArchivedViewFailsWithoutTrapping() throws {
+        let archive = try NSKeyedArchiver.archivedData(
+            withRootObject: SuggestionView(), requiringSecureCoding: false
+        )
+        let decoder = try NSKeyedUnarchiver(forReadingFrom: archive)
+        decoder.requiresSecureCoding = false
+        decoder.decodingFailurePolicy = .setErrorAndReturn
+        defer { decoder.finishDecoding() }
+
+        XCTAssertNil(decoder.decodeObject(forKey: NSKeyedArchiveRootObjectKey))
+    }
 }

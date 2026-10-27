@@ -76,7 +76,8 @@ class SuggestionView: NSView {
     }
 
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        // Suggestion rows are constructed programmatically, not decoded from archives.
+        return nil
     }
 
     override func accessibilityChildren() -> [Any]? { [] }
